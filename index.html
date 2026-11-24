@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>购买</title>
+<meta name="theme-color" content="#c2410c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="购买">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#1c1917;--sub:#78716c;--line:#e7e2da;--acc:#c2410c;--acc2:#fff1e8;--ok:#15803d;--ok2:#ecfdf3;--bad:#b91c1c;--r:12px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans","Noto Sans CJK SC",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--acc);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;display:flex;align-items:center;gap:10px}
+header h1{margin:0;font-size:20px;letter-spacing:2px}
+header .stat{font-size:13px;opacity:.95;margin-left:auto;text-align:right}
+.net{font-size:11px;padding:1px 7px;border-radius:9px;background:rgba(255,255,255,.22)}
+main{padding:12px 12px 100px;max-width:760px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:9px 0 8px;font-size:12px;color:var(--sub)}
+nav button b{display:block;font-size:19px;line-height:1.2;font-weight:normal}
+nav button.on{color:var(--acc);font-weight:600}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+input,textarea,select{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:120px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid #fdba74;border-color:transparent}
+.chip{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;font-size:13px;color:var(--ink)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600;background:var(--acc);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:normal}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn.danger{background:#fff;color:var(--bad);border:1px solid #fecaca;font-weight:normal}
+.btn.wide{width:100%}
+.ghd{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffaf5;border-bottom:1px solid var(--line)}
+.ghd .t{font-weight:700;font-size:16px}
+.ghd .n{font-size:12px;color:var(--sub)}
+.ghd .sp{margin-left:auto}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid #f3efe8}
+.row:first-of-type{border-top:0}
+.ck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid #d6d3d1;background:#fff;display:grid;place-items:center;font-size:16px;color:#fff;padding:0}
+.row.bought .ck{background:var(--ok);border-color:var(--ok)}
+.row.cancel .ck{background:#a8a29e;border-color:#a8a29e}
+.row .body{flex:1;min-width:0}
+.row .v{font-weight:600}
+.row .who{font-size:12px;color:var(--sub)}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:6px;background:var(--acc2);color:var(--acc);margin-left:4px;font-weight:normal;vertical-align:1px}
+.tag.set{background:#eef2ff;color:#4338ca}
+.row.bought .v,.row.cancel .v{text-decoration:line-through;color:var(--sub)}
+.trace{font-size:12px;color:var(--ok);margin-top:1px}
+.row.cancel .trace{color:var(--sub)}
+.muted{color:var(--sub);font-size:13px}
+.empty{text-align:center;color:var(--sub);padding:40px 10px}
+.prog{height:6px;background:#f1ede6;border-radius:3px;overflow:hidden;margin:6px 0}
+.prog i{display:block;height:100%;background:var(--ok)}
+.oc{padding:12px}
+.oc .h{display:flex;align-items:baseline;gap:8px}
+.oc .h .c{font-weight:700;font-size:16px}
+.its{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.its span{font-size:12px;padding:2px 7px;border-radius:6px;background:#f5f2ec}
+.its span.b{background:var(--ok2);color:var(--ok);text-decoration:line-through}
+.its span.x{color:#a8a29e;text-decoration:line-through}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+label.f{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
+.prev{font-size:13px;margin-top:8px}
+.prev .pl{padding:4px 0;border-bottom:1px dashed var(--line)}
+.lg{padding:8px 12px;border-top:1px solid #f3efe8;font-size:14px;display:flex;gap:10px}
+.lg .tm{color:var(--sub);font-size:12px;flex:none;width:44px;padding-top:2px}
+.lgd{padding:8px 12px;font-size:13px;font-weight:700;background:#fffaf5;color:var(--acc)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:20;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto;transform:translateY(105%);transition:transform .2s;max-width:760px;margin:0 auto}
+.sheet.on{transform:none}
+.sheet h3{margin:0 0 4px}
+.seg{display:flex;gap:6px;margin:10px 0}
+.seg button{flex:1}
+.hist{font-size:12px;color:var(--sub);margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#292524;color:#fff;padding:9px 14px;border-radius:20px;font-size:14px;z-index:30;display:none;white-space:nowrap}
+.toast button{background:none;border:0;color:#fdba74;font:inherit;font-weight:600;margin-left:10px;padding:0}
+.over{color:var(--bad);font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+details summary{cursor:pointer;color:var(--sub);font-size:13px;padding:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>购买</h1><span class="net" id="net">离线可用</span>
+  <div class="stat" id="stat"></div>
+</header>
+
+<main>
+<!-- 待购 -->
+<section class="tab on" id="t-buy">
+  <div class="bar"><input id="q" placeholder="搜书名 / 客户…" type="search"></div>
+  <div class="bar" id="fil">
+    <button class="chip on" data-f="todo">只看待购</button>
+    <button class="chip" data-f="all">全部（含已买）</button>
+    <button class="chip" data-f="bought">已买到</button>
+  </div>
+  <div id="buylist"></div>
+</section>
+
+<!-- 预订 -->
+<section class="tab" id="t-ord">
+  <div class="bar">
+    <button class="chip on" data-o="open">进行中</button>
+    <button class="chip" data-o="done">已交付</button>
+  </div>
+  <div id="ordlist"></div>
+</section>
+
+<!-- 添加 -->
+<section class="tab" id="t-add">
+  <div class="card" style="padding:14px">
+    <div id="addTitle" style="font-weight:700;font-size:16px">新预订</div>
+    <label class="f">客户（拼多多昵称 / 微信名）</label>
+    <input id="a-cus" placeholder="例：小林">
+    <label class="f">来源</label>
+    <div class="bar" id="a-src">
+      <button class="chip on">拼多多</button><button class="chip">微信</button><button class="chip">闲鱼</button><button class="chip">其他</button>
+    </div>
+    <label class="f">要买的东西（一行一个）</label>
+    <textarea id="a-items" placeholder="柯南 1-10      ← 拆成10本单本
+海贼王 全套 1-108  ← 记成1套
+鬼灭之刃 3,5,7
+椎名林檎 無罪モラトリアム"></textarea>
+    <div class="prev" id="a-prev"></div>
+    <div class="grid2">
+      <div><label class="f">截止日期（可不填）</label><input id="a-dl" type="date"></div>
+      <div><label class="f">订单号 / 备注</label><input id="a-note" placeholder="可不填"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button class="btn" style="flex:1" id="a-save">保存预订</button>
+      <button class="btn ghost" id="a-cancel" style="display:none">取消追加</button>
+    </div>
+  </div>
+  <p class="muted">小技巧：写“1-10”会自动拆成单本，到店里一本本勾；写“全套”就当一整套买，只勾一次。</p>
+</section>
+
+<!-- 记录 -->
+<section class="tab" id="t-log">
+  <div class="card" style="padding:12px">
+    <div style="font-weight:700;margin-bottom:8px">表格与备份</div>
+    <div class="acts">
+      <button class="btn sm" id="x-items">导出采购表（Excel可开）</button>
+      <button class="btn sm ghost" id="x-log">导出痕迹记录</button>
+      <button class="btn sm ghost" id="x-bak">下载备份</button>
+      <button class="btn sm ghost" id="x-res">从备份恢复</button>
+      <input type="file" id="x-file" accept=".json,application/json" style="display:none">
+    </div>
+    <p class="muted" id="bakinfo" style="margin:8px 0 0"></p>
+  </div>
+  <div class="bar"><input id="lq" placeholder="搜记录…" type="search"></div>
+  <div class="card" id="loglist"></div>
+</section>
+</main>
+
+<nav>
+  <button class="on" data-t="buy"><b>🛒</b>待购</button>
+  <button data-t="ord"><b>📋</b>预订</button>
+  <button data-t="add"><b>＋</b>添加</button>
+  <button data-t="log"><b>🕘</b>痕迹</button>
+</nav>
+
+<div class="sheet-bg" id="sbg"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='goumai-v1';
+let D={orders:[],items:[],log:[],lastBackup:0};
+let mem=false;
+function load(){try{const s=localStorage.getItem(KEY);if(s)D=Object.assign(D,JSON.parse(s));}catch(e){mem=true}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){mem=true;toast('无法保存到本机，请先下载备份')}render()}
+load();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const fday=t=>{const d=new Date(t);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const ord=id=>D.orders.find(o=>o.id===id);
+const norm=s=>s.replace(/[\s　]+/g,'').toLowerCase();
+
+function addLog(text,orderId){D.log.push({t:Date.now(),text,orderId})}
+function itemName(it){return it.kind==='set'?`${it.series} 全套${it.range?'('+it.range+')':''}`:(it.vol!=null?`${it.series} 第${it.vol}卷`:it.series)}
+function itemShort(it){return it.kind==='set'?`全套${it.range?' '+it.range:''}`:(it.vol!=null?`第${it.vol}卷`:'单件')}
+
+/* ---------- 解析输入 ---------- */
+function parseLine(line){
+  line=line.trim();if(!line)return[];
+  let m=line.match(/^(.*?)[\s　]*(?:全套|全巻|全卷|全集)[\s　]*[（(]?[\s　]*(\d+)?[\s　]*(?:[-~～〜—–到]+[\s　]*(\d+))?[\s　]*(?:巻|卷|册)?[\s　]*[)）]?$/);
+  if(m&&m[1].trim()){
+    const range=m[2]&&m[3]?`${m[2]}-${m[3]}`:(m[2]?`1-${m[2]}`:'');
+    return[{series:m[1].trim(),kind:'set',range,vol:null}];
+  }
+  m=line.match(/^(.*?)[\s　]*第?[\s　]*((?:\d+(?:[\s　]*[-~～〜—–到][\s　]*\d+)?[\s　]*[,，、/][\s　]*)*\d+(?:[\s　]*[-~～〜—–到][\s　]*\d+)?)[\s　]*(?:巻|卷|册|冊)?$/);
+  if(m&&m[1].trim()){
+    const series=m[1].trim().replace(/[第\s　]+$/,'');
+    const vols=[];
+    m[2].split(/[,，、/]/).forEach(p=>{
+      const r=p.trim().match(/^(\d+)(?:\s*[-~～〜—–到]\s*(\d+))?$/);
+      if(!r)return;
+      let a=+r[1],b=r[2]?+r[2]:a;if(b<a)[a,b]=[b,a];
+      if(b-a>300)b=a+300;
+      for(let i=a;i<=b;i++)vols.push(i);
+    });
+    return [...new Set(vols)].map(v=>({series,kind:'single',vol:v}));
+  }
+  return[{series:line,kind:'single',vol:null}];
+}
+function parseAll(txt){return txt.split(/\n/).flatMap(parseLine)}
+
+/* ---------- 渲染 ---------- */
+let F='todo',O='open';
+function visibleItems(){
+  return D.items.filter(it=>{const o=ord(it.orderId);return o&&!o.done})
+}
+function render(){
+  const vis=visibleItems();
+  const todo=vis.filter(i=>i.status==='todo').length;
+  const today=D.items.filter(i=>i.status==='bought'&&fday(i.boughtAt)===fday(Date.now())).length;
+  $('#stat').innerHTML=`待购 <b>${todo}</b> 件<br>今天买到 ${today}`;
+  renderBuy();renderOrd();renderLog();
+  const days=D.lastBackup?Math.floor((Date.now()-D.lastBackup)/864e5):null;
+  $('#bakinfo').textContent=(D.lastBackup?`上次备份：${fday(D.lastBackup)}（${days}天前）`:'还没有备份过')+'。数据存在这台手机里，建议每周下载一次备份。'+(mem?' ⚠️ 当前无法写入本机存储！':'');
+}
+
+function renderBuy(){
+  const q=norm($('#q').value||'');
+  let list=visibleItems();
+  if(F==='todo')list=list.filter(i=>i.status==='todo');
+  if(F==='bought')list=list.filter(i=>i.status==='bought');
+  if(F==='all')list=list.filter(i=>i.status!=='cancel'||true);
+  if(q)list=list.filter(i=>norm(i.series).includes(q)||norm(ord(i.orderId).customer).includes(q));
+  const groups={};
+  list.forEach(i=>{const k=norm(i.series);(groups[k]=groups[k]||{name:i.series,items:[]}).items.push(i)});
+  const gs=Object.values(groups).sort((a,b)=>{
+    const ta=a.items.filter(i=>i.status==='todo').length,tb=b.items.filter(i=>i.status==='todo').length;
+    if(!!ta!==!!tb)return tb?1:-1;return a.name.localeCompare(b.name,'zh')});
+  if(!gs.length){$('#buylist').innerHTML=`<div class="empty">${F==='todo'?(D.items.length?'🎉 全部买齐了':'还没有预订<br>点下面「＋添加」开始'):'没有内容'}</div>`;return}
+  const rank={todo:0,bought:1,cancel:2};
+  $('#buylist').innerHTML=gs.map(g=>{
+    g.items.sort((a,b)=>rank[a.status]-rank[b.status]||(a.kind==='set'?-1:0)-(b.kind==='set'?-1:0)||(a.vol??0)-(b.vol??0));
+    const nt=g.items.filter(i=>i.status==='todo').length;
+    const vols=g.items.filter(i=>i.status==='todo'&&i.vol!=null).map(i=>i.vol);
+    return `<div class="card"><div class="ghd"><span class="t">${esc(g.name)}</span><span class="n">${nt?`还差 ${nt} 件${vols.length>1?'：'+compact(vols):''}`:'已买齐'}</span>
+      ${nt>1?`<button class="btn sm ghost sp" data-all="${esc(norm(g.name))}">整组买到</button>`:''}</div>
+      ${g.items.map(rowHTML).join('')}</div>`}).join('');
+}
+function compact(vs){vs=[...new Set(vs)].sort((a,b)=>a-b);const out=[];let s=vs[0],p=vs[0];
+  for(let i=1;i<=vs.length;i++){if(vs[i]===p+1){p=vs[i];continue}out.push(s===p?s:s+'-'+p);s=p=vs[i]}return out.join(',')+'卷'}
+function rowHTML(it){
+  const o=ord(it.orderId);
+  let tr='';
+  if(it.status==='bought')tr=`<div class="trace">✓ ${fmt(it.boughtAt)} 买到${it.price?' · '+esc(it.price)+'円':''}${it.store?' · '+esc(it.store):''}</div>`;
+  if(it.status==='cancel')tr=`<div class="trace">✕ ${fmt(it.cancelAt)} 已取消</div>`;
+  return `<div class="row ${it.status}" data-id="${it.id}">
+    <button class="ck" data-ck="${it.id}">${it.status==='bought'?'✓':it.status==='cancel'?'✕':''}</button>
+    <div class="body" data-open="${it.id}"><div class="v">${itemShort(it)}${it.kind==='set'?'<span class="tag set">整套</span>':''}</div>
+    <div class="who">${esc(o.customer)}<span class="tag">${esc(o.src)}</span>${o.deadline?` · <span class="${o.deadline<fday(Date.now())&&it.status==='todo'?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</div>${tr}</div></div>`;
+}
+
+function renderOrd(){
+  const os=D.orders.filter(o=>O==='done'?o.done:!o.done).sort((a,b)=>b.created-a.created);
+  if(!os.length){$('#ordlist').innerHTML=`<div class="empty">${O==='done'?'还没有已交付的预订':'没有进行中的预订'}</div>`;return}
+  $('#ordlist').innerHTML=os.map(o=>{
+    const its=D.items.filter(i=>i.orderId===o.id);
+    const valid=its.filter(i=>i.status!=='cancel'),b=valid.filter(i=>i.status==='bought').length;
+    const pct=valid.length?Math.round(b/valid.length*100):0;
+    const cost=its.reduce((s,i)=>s+(i.status==='bought'&&+i.price?+i.price:0),0);
+    return `<div class="card oc"><div class="h"><span class="c">${esc(o.customer)}</span><span class="tag">${esc(o.src)}</span>
+      <span class="muted" style="margin-left:auto">${fday(o.created).slice(5)} 下单${o.deadline?` · <span class="${!o.done&&o.deadline<fday(Date.now())&&b<valid.length?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</span></div>
+      ${o.note?`<div class="muted">${esc(o.note)}</div>`:''}
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <div class="muted">买到 ${b}/${valid.length}${cost?` · 已花 ${cost}円`:''}${o.done?` · ${fday(o.doneAt)} 已交付`:''}</div>
+      <div class="its">${its.map(i=>`<span class="${i.status==='bought'?'b':i.status==='cancel'?'x':''}">${esc(itemName(i))}</span>`).join('')}</div>
+      <div class="acts">${o.done?`<button class="btn sm ghost" data-reopen="${o.id}">恢复为进行中</button>`:
+      `<button class="btn sm ghost" data-more="${o.id}">追加</button><button class="btn sm" data-done="${o.id}">${b<valid.length?'交付（未买齐）':'✓ 已交付'}</button>`}
+      <button class="btn sm danger" data-del="${o.id}">删除</button></div></div>`}).join('');
+}
+
+function renderLog(){
+  const q=norm($('#lq').value||'');
+  let L=[...D.log].reverse();if(q)L=L.filter(l=>norm(l.text).includes(q));
+  if(!L.length){$('#loglist').innerHTML='<div class="empty">还没有记录</div>';return}
+  let cur='',h='';
+  L.slice(0,500).forEach(l=>{const d=fday(l.t);if(d!==cur){cur=d;h+=`<div class="lgd">${d}</div>`}
+    const t=new Date(l.t);h+=`<div class="lg"><span class="tm">${pad(t.getHours())}:${pad(t.getMinutes())}</span><span>${esc(l.text)}</span></div>`});
+  $('#loglist').innerHTML=h+(L.length>500?'<div class="lg muted">（更早的记录请导出查看）</div>':'');
+}
+
+/* ---------- 操作 ---------- */
+function setStatus(it,st,silent){
+  const o=ord(it.orderId),prev=it.status;if(prev===st)return;
+  it.hist=it.hist||[];
+  const now=Date.now();
+  if(st==='bought'){it.boughtAt=now;addLog(`买到 ${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:'标记买到'})}
+  if(st==='cancel'){it.cancelAt=now;addLog(`取消 ${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:'取消'})}
+  if(st==='todo'){addLog(`撤销「${prev==='bought'?'买到':'取消'}」→ 改回待购：${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:(prev==='bought'?'撤销买到':'撤销取消')+'（原记录 '+fmt(prev==='bought'?it.boughtAt:it.cancelAt)+'）'})}
+  it.status=st;
+  if(!silent){save();if(st==='bought')toast(`✓ ${itemName(it)}`,()=>{setStatus(it,'todo')})}
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-open]');if(!t)return;
+  const d=t.dataset;
+  if(t.closest('nav')&&d.t){go(d.t);return}
+  if(d.f){F=d.f;document.querySelectorAll('#fil .chip').forEach(c=>c.classList.toggle('on',c===t));renderBuy();return}
+  if(d.o){O=d.o;document.querySelectorAll('[data-o]').forEach(c=>c.classList.toggle('on',c===t));renderOrd();return}
+  if(t.closest('#a-src')){document.querySelectorAll('#a-src .chip').forEach(c=>c.classList.toggle('on',c===t));return}
+  if(d.ck){const it=D.items.find(i=>i.id===d.ck);setStatus(it,it.status==='todo'?'bought':'todo');return}
+  if(d.open){openItem(d.open);return}
+  if(d.all){confirm2(t,()=>{const its=visibleItems().filter(i=>norm(i.series)===d.all&&i.status==='todo');its.forEach(i=>setStatus(i,'bought',true));save();toast(`✓ 整组 ${its.length} 件买到`)});return}
+  if(d.done){const o=ord(d.done);o.done=true;o.doneAt=Date.now();addLog(`交付 ${o.customer} 的预订`,o.id);save();toast('已移到「已交付」');return}
+  if(d.reopen){const o=ord(d.reopen);o.done=false;addLog(`恢复 ${o.customer} 的预订为进行中`,o.id);save();return}
+  if(d.more){startMore(d.more);return}
+  if(d.del){confirm2(t,()=>{const o=ord(d.del);const n=D.items.filter(i=>i.orderId===o.id).length;
+    D.items=D.items.filter(i=>i.orderId!==o.id);D.orders=D.orders.filter(x=>x!==o);
+    addLog(`删除 ${o.customer} 的预订（${n}件，删除前已记录在此）`);save()});return}
+});
+function confirm2(btn,fn){if(btn.dataset.armed){fn();return}const old=btn.textContent;btn.dataset.armed=1;btn.textContent='再点一次确认';
+  setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=old}},2500)}
+
+function go(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));window.scrollTo(0,0)}
+
+/* 详情 */
+function openItem(id){$('#toast').style.display='none';
+  const it=D.items.find(i=>i.id===id),o=ord(it.orderId);
+  $('#sheet').innerHTML=`<h3>${esc(itemName(it))}</h3><div class="muted">${esc(o.customer)} · ${esc(o.src)} · ${fday(o.created)} 下单</div>
+   <div class="seg"><button class="btn ${it.status==='todo'?'':'ghost'}" data-s="todo">待购</button><button class="btn ${it.status==='bought'?'':'ghost'}" data-s="bought">买到了</button><button class="btn ${it.status==='cancel'?'':'ghost'}" data-s="cancel">取消</button></div>
+   <div class="grid2"><div><label class="f">买入价（円）</label><input id="s-price" inputmode="decimal" value="${esc(it.price||'')}"></div>
+   <div><label class="f">在哪买的</label><input id="s-store" placeholder="例：Bookoff 三宮" value="${esc(it.store||'')}"></div></div>
+   <label class="f">备注</label><input id="s-note" value="${esc(it.note||'')}">
+   <button class="btn wide" style="margin-top:14px" id="s-ok">完成</button>
+   <div class="hist"><b>这件的痕迹</b><br>${fmt(o.created)} 加入预订<br>${(it.hist||[]).map(h=>`${fmt(h.t)} ${esc(h.a)}`).join('<br>')}</div>`;
+  $('#sheet').classList.add('on');$('#sbg').style.display='block';
+  $('#sheet').querySelectorAll('[data-s]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();keep();setStatus(it,b.dataset.s,true);save();openItem(id)});
+  function keep(){const p=$('#s-price').value.trim(),s=$('#s-store').value.trim(),n=$('#s-note').value.trim();
+    if(p!==(it.price||'')||s!==(it.store||'')){if(p||s)it.hist=(it.hist||[]).concat({t:Date.now(),a:`记下 ${p?p+'円':''}${p&&s?' · ':''}${s}`})}
+    it.price=p;it.store=s;it.note=n}
+  $('#s-ok').onclick=ev=>{ev.stopPropagation();keep();save();closeSheet()};
+}
+function closeSheet(){$('#sheet').classList.remove('on');$('#sbg').style.display='none'}
+$('#sbg').onclick=closeSheet;
+
+/* 添加 */
+let moreId=null;
+function startMore(id){const o=ord(id);moreId=id;go('add');$('#addTitle').textContent=`给「${o.customer}」追加`;
+  $('#a-cus').value=o.customer;$('#a-cus').disabled=true;$('#a-cancel').style.display='';$('#a-items').focus()}
+function resetAdd(){moreId=null;$('#addTitle').textContent='新预订';$('#a-cus').disabled=false;$('#a-cancel').style.display='none';
+  ['#a-cus','#a-items','#a-dl','#a-note'].forEach(s=>$(s).value='');$('#a-prev').innerHTML=''}
+$('#a-cancel').onclick=resetAdd;
+$('#a-items').oninput=()=>{
+  const lines=$('#a-items').value.split('\n').filter(l=>l.trim());
+  if(!lines.length){$('#a-prev').innerHTML='';return}
+  const all=parseAll($('#a-items').value);
+  $('#a-prev').innerHTML=`<b>会记成 ${all.length} 件：</b>`+lines.map(l=>{const r=parseLine(l);if(!r.length)return'';
+    const x=r[0];const desc=x.kind==='set'?`整套 1 件${x.range?'（'+x.range+'）':''}`:x.vol==null?'1 件':`单本 ${r.length} 本（${compact(r.map(y=>y.vol))}）`;
+    return `<div class="pl">${esc(x.series)} → ${desc}</div>`}).join('');
+};
+$('#a-save').onclick=()=>{
+  const items=parseAll($('#a-items').value);
+  const cus=$('#a-cus').value.trim();
+  if(!cus){toast('先填客户');$('#a-cus').focus();return}
+  if(!items.length){toast('还没写要买什么');return}
+  let o;
+  if(moreId){o=ord(moreId);addLog(`给 ${o.customer} 追加 ${items.length} 件：${summ(items)}`,o.id)}
+  else{o={id:uid(),customer:cus,src:document.querySelector('#a-src .chip.on').textContent,created:Date.now(),deadline:$('#a-dl').value,note:$('#a-note').value.trim(),done:false};
+    D.orders.push(o);addLog(`新预订 ${cus}（${o.src}）${items.length} 件：${summ(items)}`,o.id)}
+  items.forEach(x=>D.items.push(Object.assign({id:uid(),orderId:o.id,status:'todo',hist:[]},x)));
+  save();resetAdd();go('buy');toast(`已加入待购 ${items.length} 件`);
+};
+function summ(items){const g={};items.forEach(i=>{(g[i.series]=g[i.series]||[]).push(i)});
+  return Object.entries(g).map(([s,a])=>a[0].kind==='set'?`${s}全套`:a[0].vol==null?s:`${s} ${compact(a.map(i=>i.vol))}`).join('、')}
+
+/* 导出 / 备份 */
+function dl(name,text,type){const b=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+const csvc=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+const csv=rows=>'﻿'+rows.map(r=>r.map(csvc).join(',')).join('\r\n');
+const stName={todo:'待购',bought:'已买到',cancel:'已取消'};
+$('#x-items').onclick=()=>{
+  const rows=[['系列/书名','卷/全套','状态','客户','来源','下单日','截止','买到时间','价格(円)','在哪买','备注','预订状态']];
+  D.items.forEach(i=>{const o=ord(i.orderId)||{};rows.push([i.series,itemShort(i),stName[i.status],o.customer,o.src,o.created?fday(o.created):'',o.deadline||'',i.boughtAt&&i.status==='bought'?fday(i.boughtAt)+' '+fmt(i.boughtAt).split(' ')[1]:'',i.price||'',i.store||'',i.note||'',o.done?'已交付':'进行中'])});
+  dl(`购买_采购表_${fday(Date.now())}.csv`,csv(rows),'text/csv')};
+$('#x-log').onclick=()=>{const rows=[['日期','时间','记录']];D.log.forEach(l=>{const d=new Date(l.t);rows.push([fday(l.t),pad(d.getHours())+':'+pad(d.getMinutes()),l.text])});
+  dl(`购买_痕迹_${fday(Date.now())}.csv`,csv(rows),'text/csv')};
+$('#x-bak').onclick=()=>{D.lastBackup=Date.now();save();dl(`购买_备份_${fday(Date.now())}.json`,JSON.stringify(D),'application/json');toast('备份已下载')};
+$('#x-res').onclick=()=>$('#x-file').click();
+$('#x-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const n=JSON.parse(r.result);if(!Array.isArray(n.items))throw 0;
+  D=Object.assign({orders:[],items:[],log:[],lastBackup:0},n);addLog(`从备份恢复（${f.name}）`);save();toast('已恢复')}catch(x){toast('这个文件不是「购买」的备份')}};r.readAsText(f);e.target.value=''};
+
+/* 杂项 */
+let tt;function toast(msg,undo){const el=$('#toast');el.innerHTML=esc(msg)+(undo?'<button id="undo">撤销</button>':'');el.style.display='block';
+  if(undo)$('#undo').onclick=()=>{undo();el.style.display='none'};clearTimeout(tt);tt=setTimeout(()=>el.style.display='none',undo?4000:2000)}
+$('#q').oninput=renderBuy;$('#lq').oninput=renderLog;
+function net(){$('#net').textContent=navigator.onLine?'在线':'离线中 · 照常使用'}
+addEventListener('online',net);addEventListener('offline',net);net();
+if(D.lastBackup&&Date.now()-D.lastBackup>7*864e5&&D.items.length)setTimeout(()=>toast('已经一周没备份了，去「痕迹」页下载一下吧'),800);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
+</script>
+</body>
+</html>
