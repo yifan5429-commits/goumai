@@ -37,7 +37,7 @@ input:focus,textarea:focus{outline:2px solid #fdba74;border-color:transparent}
 .btn.danger{background:#fff;color:var(--bad);border:1px solid #fecaca;font-weight:normal}
 .btn.wide{width:100%}
 .ghd{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fffaf5;border-bottom:1px solid var(--line)}
-.ghd .t{font-weight:700;font-size:16px}
+.ghd .t{font-weight:700;font-size:16px;min-width:0;overflow-wrap:anywhere}
 .ghd .n{font-size:12px;color:var(--sub)}
 .ghd .sp{margin-left:auto}
 .row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid #f3efe8}
@@ -82,6 +82,18 @@ label.f{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
 .toast button{background:none;border:0;color:#fdba74;font:inherit;font-weight:600;margin-left:10px;padding:0}
 .over{color:var(--bad);font-weight:600}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.ck.part{border-color:var(--acc);color:var(--acc);font-size:11px;font-weight:700}
+.qty{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--acc);border-radius:6px;padding:0 6px;margin-left:6px;vertical-align:2px}
+.row.bought .qty,.row.cancel .qty{background:#a8a29e}
+.ghd .add{border:1px solid var(--line);background:#fff;border-radius:8px;width:34px;height:30px;font-size:18px;line-height:1;color:var(--acc);padding:0}
+.ghd .sp{margin-left:auto}
+.ar{display:flex;gap:8px;align-items:center;margin-top:8px}
+.ar input{flex:1;font-size:16px}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.step button{width:40px;height:42px;border:0;background:#fff;font-size:20px;color:var(--acc)}
+.step span{min-width:44px;text-align:center;font-weight:700}
+.ar .rm{border:0;background:none;color:#a8a29e;font-size:20px;width:30px;padding:0}
 details summary{cursor:pointer;color:var(--sub);font-size:13px;padding:6px 0}
 </style>
 </head>
@@ -94,7 +106,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:13px;padding:6px 0}
 <main>
 <!-- 待购 -->
 <section class="tab on" id="t-buy">
-  <div class="bar"><input id="q" placeholder="搜书名 / 客户…" type="search"></div>
+  <div class="bar"><input id="q" placeholder="搜书名 / 备注…" type="search"></div>
   <div class="bar" id="fil">
     <button class="chip on" data-f="todo">只看待购</button>
     <button class="chip" data-f="all">全部（含已买）</button>
@@ -116,28 +128,27 @@ details summary{cursor:pointer;color:var(--sub);font-size:13px;padding:6px 0}
 <section class="tab" id="t-add">
   <div class="card" style="padding:14px">
     <div id="addTitle" style="font-weight:700;font-size:16px">新预订</div>
-    <label class="f">客户（拼多多昵称 / 微信名）</label>
-    <input id="a-cus" placeholder="例：小林">
     <label class="f">来源</label>
     <div class="bar" id="a-src">
       <button class="chip on">拼多多</button><button class="chip">微信</button><button class="chip">闲鱼</button><button class="chip">其他</button>
     </div>
     <label class="f">要买的东西（一行一个）</label>
-    <textarea id="a-items" placeholder="柯南 1-10      ← 拆成10本单本
-海贼王 全套 1-108  ← 记成1套
+    <textarea id="a-items" placeholder="柯南 1-10        ← 拆成10本单本
+进击的巨人 5两本 8三本  ← 写数量
 鬼灭之刃 3,5,7
+海贼王 全套 1-108  ← 记成1套
 椎名林檎 無罪モラトリアム"></textarea>
     <div class="prev" id="a-prev"></div>
     <div class="grid2">
       <div><label class="f">截止日期（可不填）</label><input id="a-dl" type="date"></div>
-      <div><label class="f">订单号 / 备注</label><input id="a-note" placeholder="可不填"></div>
+      <div><label class="f">备注（可不填）</label><input id="a-note" placeholder="订单号、谁要的…"></div>
     </div>
     <div style="margin-top:14px;display:flex;gap:8px">
       <button class="btn" style="flex:1" id="a-save">保存预订</button>
       <button class="btn ghost" id="a-cancel" style="display:none">取消追加</button>
     </div>
   </div>
-  <p class="muted">小技巧：写“1-10”会自动拆成单本，到店里一本本勾；写“全套”就当一整套买，只勾一次。</p>
+  <p class="muted">小技巧：写“1-10”自动拆成单本；“5两本”“5x2”“5 2本”都表示第5卷买2本；写“全套”当一整套买。<br>已有的系列，在「待购」页点组名旁边的「＋」加更快。</p>
 </section>
 
 <!-- 记录 -->
@@ -169,12 +180,14 @@ details summary{cursor:pointer;color:var(--sub);font-size:13px;padding:6px 0}
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 
+
 <script>
 const KEY='goumai-v1';
-let D={orders:[],items:[],log:[],lastBackup:0};
+let D={orders:[],items:[],log:[],lastBackup:0,lastSrc:'闲鱼'};
 let mem=false;
 function load(){try{const s=localStorage.getItem(KEY);if(s)D=Object.assign(D,JSON.parse(s));}catch(e){mem=true}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){mem=true;toast('无法保存到本机，请先下载备份')}render()}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){mem=true;toast('无法保存到本机，请先下载备份')}}
+function save(){persist();render()}
 load();
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
@@ -185,85 +198,119 @@ const pad=n=>String(n).padStart(2,'0');
 const fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
 const fday=t=>{const d=new Date(t);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
 const ord=id=>D.orders.find(o=>o.id===id);
-const norm=s=>s.replace(/[\s　]+/g,'').toLowerCase();
+const norm=s=>String(s).replace(/[\s　]+/g,'').toLowerCase();
+const Q=it=>it.qty||1, G=it=>it.got||0;
+const rem=it=>it.status==='todo'?Math.max(Q(it)-G(it),0):0;
+function oLabel(o){return o.customer||o.note||`${o.src} ${fday(o.created).slice(5).replace('-','/')}`}
 
 function addLog(text,orderId){D.log.push({t:Date.now(),text,orderId})}
-function itemName(it){return it.kind==='set'?`${it.series} 全套${it.range?'('+it.range+')':''}`:(it.vol!=null?`${it.series} 第${it.vol}卷`:it.series)}
+function itemName(it){const b=it.kind==='set'?`${it.series} 全套${it.range?'('+it.range+')':''}`:(it.vol!=null?`${it.series} 第${it.vol}卷`:it.series);return b+(Q(it)>1?` ×${Q(it)}`:'')}
 function itemShort(it){return it.kind==='set'?`全套${it.range?' '+it.range:''}`:(it.vol!=null?`第${it.vol}卷`:'单件')}
 
 /* ---------- 解析输入 ---------- */
+const CN={'一':1,'二':2,'两':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+function cn2n(s){if(/^\d+$/.test(s))return +s;if(s==='十')return 10;if(s.length===2&&s[0]==='十')return 10+CN[s[1]];if(s.length===2&&s[1]==='十')return CN[s[0]]*10;if(s.length===3&&s[1]==='十')return CN[s[0]]*10+CN[s[2]];return CN[s]||1}
+function normQ(s){return s.replace(/([一二两兩三四五六七八九十]+)\s*(本|册|冊|个|個|張|张|枚)/g,(m,a)=>' '+cn2n(a)+'本').replace(/(\d)\s*(个|個|張|张|枚)/g,'$1本')}
+const R='[-~～〜—–到]';
+const TOK=`第?\\s*(\\d+)(?:\\s*${R}\\s*(\\d+))?\\s*(?:卷|巻|册|冊)?\\s*(?:[x×*＊Xｘ]\\s*(\\d+)\\s*(?:本|册|冊)?|(\\d+)\\s*(?:本|册|冊)|[（(]\\s*(\\d+)\\s*(?:本|册|冊)?\\s*[)）])?`;
+const SEP=`(?:\\s*[,，、/;；]\\s*|\\s+)`;
+const SPEC=new RegExp(`^(?:${TOK})(?:${SEP}(?:${TOK}))*(?:\\s*各\\s*(\\d+)\\s*本)?$`);
 function parseLine(line){
-  line=line.trim();if(!line)return[];
-  let m=line.match(/^(.*?)[\s　]*(?:全套|全巻|全卷|全集)[\s　]*[（(]?[\s　]*(\d+)?[\s　]*(?:[-~～〜—–到]+[\s　]*(\d+))?[\s　]*(?:巻|卷|册)?[\s　]*[)）]?$/);
+  line=normQ(line.trim());if(!line)return[];
+  // 全套
+  let m=line.match(/^(.*?)[\s　]*(?:全套|全巻|全卷|全集)[\s　]*[（(]?[\s　]*(\d+)?[\s　]*(?:[-~～〜—–到]+[\s　]*(\d+))?[\s　]*(?:巻|卷|册)?[\s　]*[)）]?[\s　]*(?:[x×*＊]\s*(\d+)\s*本?|(\d+)\s*本)?$/);
   if(m&&m[1].trim()){
     const range=m[2]&&m[3]?`${m[2]}-${m[3]}`:(m[2]?`1-${m[2]}`:'');
-    return[{series:m[1].trim(),kind:'set',range,vol:null}];
+    return[{series:m[1].trim(),kind:'set',range,vol:null,qty:+(m[4]||m[5]||1)}];
   }
-  m=line.match(/^(.*?)[\s　]*第?[\s　]*((?:\d+(?:[\s　]*[-~～〜—–到][\s　]*\d+)?[\s　]*[,，、/][\s　]*)*\d+(?:[\s　]*[-~～〜—–到][\s　]*\d+)?)[\s　]*(?:巻|卷|册|冊)?$/);
-  if(m&&m[1].trim()){
-    const series=m[1].trim().replace(/[第\s　]+$/,'');
-    const vols=[];
-    m[2].split(/[,，、/]/).forEach(p=>{
-      const r=p.trim().match(/^(\d+)(?:\s*[-~～〜—–到]\s*(\d+))?$/);
-      if(!r)return;
-      let a=+r[1],b=r[2]?+r[2]:a;if(b<a)[a,b]=[b,a];
-      if(b-a>300)b=a+300;
-      for(let i=a;i<=b;i++)vols.push(i);
-    });
-    return [...new Set(vols)].map(v=>({series,kind:'single',vol:v}));
+  // 系列 + 卷号（+数量）
+  for(let i=1;i<line.length;i++){
+    const series=line.slice(0,i).replace(/[\s　第]+$/,'').trim();
+    if(!series||/\d$/.test(line[i-1])&&/\d/.test(line[i]))continue;
+    const rest=line.slice(i).trim();
+    if(!SPEC.test(rest))continue;
+    const each=(rest.match(/各\s*(\d+)\s*本\s*$/)||[])[1];
+    const body=rest.replace(/\s*各\s*\d+\s*本\s*$/,'');
+    const out=[],seen={};
+    for(const t of body.matchAll(new RegExp(TOK,'g'))){
+      if(!t[1])continue;
+      let a=+t[1],b=t[2]?+t[2]:a;if(b<a)[a,b]=[b,a];if(b-a>300)b=a+300;
+      const q=+(t[3]||t[4]||t[5]||each||1);
+      for(let v=a;v<=b;v++){if(seen[v]){seen[v].qty+=q;continue}const x={series,kind:'single',vol:v,qty:q};seen[v]=x;out.push(x)}
+    }
+    if(out.length)return out;
   }
-  return[{series:line,kind:'single',vol:null}];
+  // 无卷号 + 数量
+  m=line.match(/^(.*?\S)\s*(?:[x×*＊]\s*(\d+)\s*本?|(\d+)\s*本)$/);
+  if(m)return[{series:m[1].trim(),kind:'single',vol:null,qty:+(m[2]||m[3])}];
+  return[{series:line,kind:'single',vol:null,qty:1}];
 }
 function parseAll(txt){return txt.split(/\n/).flatMap(parseLine)}
 
+/* 旧数据：把“進擊的巨人 5 一本”这种重新识别 */
+(function migrate(){let ch=false;const add=[];
+  D.items.forEach(it=>{if(it.kind==='single'&&it.vol==null&&it.status==='todo'&&!G(it)){
+    const r=parseLine(it.series);if(r.length&&(r[0].vol!=null||r[0].qty>1)&&r[0].series!==it.series){
+      Object.assign(it,r[0]);ch=true;r.slice(1).forEach(x=>add.push(Object.assign({id:uid(),orderId:it.orderId,status:'todo',hist:[],got:0},x)))}}});
+  if(ch){D.items.push(...add);persist()}})();
+
 /* ---------- 渲染 ---------- */
 let F='todo',O='open';
-function visibleItems(){
-  return D.items.filter(it=>{const o=ord(it.orderId);return o&&!o.done})
-}
+function visibleItems(){return D.items.filter(it=>{const o=ord(it.orderId);return o&&!o.done})}
 function render(){
   const vis=visibleItems();
-  const todo=vis.filter(i=>i.status==='todo').length;
-  const today=D.items.filter(i=>i.status==='bought'&&fday(i.boughtAt)===fday(Date.now())).length;
-  $('#stat').innerHTML=`待购 <b>${todo}</b> 件<br>今天买到 ${today}`;
+  const todo=vis.reduce((s,i)=>s+rem(i),0);
+  const td=fday(Date.now());
+  const today=D.log.filter(l=>fday(l.t)===td&&l.n).reduce((s,l)=>s+l.n,0);
+  $('#stat').innerHTML=`待购 <b>${todo}</b> 本<br>今天买到 ${today}`;
   renderBuy();renderOrd();renderLog();
   const days=D.lastBackup?Math.floor((Date.now()-D.lastBackup)/864e5):null;
   $('#bakinfo').textContent=(D.lastBackup?`上次备份：${fday(D.lastBackup)}（${days}天前）`:'还没有备份过')+'。数据存在这台手机里，建议每周下载一次备份。'+(mem?' ⚠️ 当前无法写入本机存储！':'');
 }
-
+function needText(items){
+  const t=items.filter(i=>rem(i));if(!t.length)return'';
+  const multi=t.some(i=>rem(i)>1);
+  const vols=t.filter(i=>i.vol!=null);
+  if(!vols.length||vols.length!==t.length)return '';
+  if(!multi&&vols.length>1)return '：'+compact(vols.map(i=>i.vol));
+  if(multi){const m={};vols.forEach(i=>m[i.vol]=(m[i.vol]||0)+rem(i));return '：'+Object.keys(m).sort((a,b)=>a-b).map(v=>m[v]>1?`${v}×${m[v]}`:v).join('、')}
+  return '';
+}
 function renderBuy(){
   const q=norm($('#q').value||'');
   let list=visibleItems();
   if(F==='todo')list=list.filter(i=>i.status==='todo');
-  if(F==='bought')list=list.filter(i=>i.status==='bought');
-  if(F==='all')list=list.filter(i=>i.status!=='cancel'||true);
-  if(q)list=list.filter(i=>norm(i.series).includes(q)||norm(ord(i.orderId).customer).includes(q));
+  if(F==='bought')list=list.filter(i=>i.status==='bought'||G(i)>0);
+  if(q)list=list.filter(i=>norm(i.series).includes(q)||norm(oLabel(ord(i.orderId))).includes(q));
   const groups={};
   list.forEach(i=>{const k=norm(i.series);(groups[k]=groups[k]||{name:i.series,items:[]}).items.push(i)});
   const gs=Object.values(groups).sort((a,b)=>{
-    const ta=a.items.filter(i=>i.status==='todo').length,tb=b.items.filter(i=>i.status==='todo').length;
-    if(!!ta!==!!tb)return tb?1:-1;return a.name.localeCompare(b.name,'zh')});
+    const ta=a.items.some(rem),tb=b.items.some(rem);
+    if(ta!==tb)return tb?1:-1;return a.name.localeCompare(b.name,'zh')});
   if(!gs.length){$('#buylist').innerHTML=`<div class="empty">${F==='todo'?(D.items.length?'🎉 全部买齐了':'还没有预订<br>点下面「＋添加」开始'):'没有内容'}</div>`;return}
   const rank={todo:0,bought:1,cancel:2};
   $('#buylist').innerHTML=gs.map(g=>{
-    g.items.sort((a,b)=>rank[a.status]-rank[b.status]||(a.kind==='set'?-1:0)-(b.kind==='set'?-1:0)||(a.vol??0)-(b.vol??0));
-    const nt=g.items.filter(i=>i.status==='todo').length;
-    const vols=g.items.filter(i=>i.status==='todo'&&i.vol!=null).map(i=>i.vol);
-    return `<div class="card"><div class="ghd"><span class="t">${esc(g.name)}</span><span class="n">${nt?`还差 ${nt} 件${vols.length>1?'：'+compact(vols):''}`:'已买齐'}</span>
-      ${nt>1?`<button class="btn sm ghost sp" data-all="${esc(norm(g.name))}">整组买到</button>`:''}</div>
+    g.items.sort((a,b)=>rank[a.status]-rank[b.status]||(b.kind==='set')-(a.kind==='set')||(a.vol??0)-(b.vol??0));
+    const nt=g.items.reduce((s,i)=>s+rem(i),0);
+    const key=esc(norm(g.name));
+    return `<div class="card"><div class="ghd"><span class="t">${esc(g.name)}</span><span class="n">${nt?`还差 ${nt} 本${needText(g.items)}`:'已买齐'}</span>
+      <span class="sp"></span>${g.items.filter(rem).length>1?`<button class="btn sm ghost" data-all="${key}">全买到</button>`:''}
+      <button class="add" data-gadd="${key}" title="给这个系列加卷">＋</button></div>
       ${g.items.map(rowHTML).join('')}</div>`}).join('');
 }
 function compact(vs){vs=[...new Set(vs)].sort((a,b)=>a-b);const out=[];let s=vs[0],p=vs[0];
   for(let i=1;i<=vs.length;i++){if(vs[i]===p+1){p=vs[i];continue}out.push(s===p?s:s+'-'+p);s=p=vs[i]}return out.join(',')+'卷'}
 function rowHTML(it){
-  const o=ord(it.orderId);
+  const o=ord(it.orderId),q=Q(it),g=G(it);
   let tr='';
-  if(it.status==='bought')tr=`<div class="trace">✓ ${fmt(it.boughtAt)} 买到${it.price?' · '+esc(it.price)+'円':''}${it.store?' · '+esc(it.store):''}</div>`;
-  if(it.status==='cancel')tr=`<div class="trace">✕ ${fmt(it.cancelAt)} 已取消</div>`;
+  if(it.status==='bought')tr=`<div class="trace">✓ ${fmt(it.boughtAt)} ${q>1?'买齐':'买到'}${it.price?' · '+esc(it.price)+'円':''}${it.store?' · '+esc(it.store):''}</div>`;
+  else if(it.status==='cancel')tr=`<div class="trace">✕ ${fmt(it.cancelAt)} 已取消</div>`;
+  else if(g>0)tr=`<div class="trace">已买 ${g}/${q} 本 · 最近 ${fmt(it.lastGot)}</div>`;
+  const ck=it.status==='bought'?'✓':it.status==='cancel'?'✕':g>0?`${g}/${q}`:'';
   return `<div class="row ${it.status}" data-id="${it.id}">
-    <button class="ck" data-ck="${it.id}">${it.status==='bought'?'✓':it.status==='cancel'?'✕':''}</button>
-    <div class="body" data-open="${it.id}"><div class="v">${itemShort(it)}${it.kind==='set'?'<span class="tag set">整套</span>':''}</div>
-    <div class="who">${esc(o.customer)}<span class="tag">${esc(o.src)}</span>${o.deadline?` · <span class="${o.deadline<fday(Date.now())&&it.status==='todo'?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</div>${tr}</div></div>`;
+    <button class="ck ${it.status==='todo'&&g>0?'part':''}" data-ck="${it.id}">${ck}</button>
+    <div class="body" data-open="${it.id}"><div class="v">${itemShort(it)}${q>1?`<span class="qty">×${q}</span>`:''}${it.kind==='set'?'<span class="tag set">整套</span>':''}</div>
+    <div class="who">${esc(o.customer||o.note||'')}<span class="tag">${esc(o.src)}</span> ${fday(o.created).slice(5).replace('-','/')}${o.deadline?` · <span class="${o.deadline<fday(Date.now())&&it.status==='todo'?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</div>${tr}</div></div>`;
 }
 
 function renderOrd(){
@@ -271,17 +318,18 @@ function renderOrd(){
   if(!os.length){$('#ordlist').innerHTML=`<div class="empty">${O==='done'?'还没有已交付的预订':'没有进行中的预订'}</div>`;return}
   $('#ordlist').innerHTML=os.map(o=>{
     const its=D.items.filter(i=>i.orderId===o.id);
-    const valid=its.filter(i=>i.status!=='cancel'),b=valid.filter(i=>i.status==='bought').length;
-    const pct=valid.length?Math.round(b/valid.length*100):0;
-    const cost=its.reduce((s,i)=>s+(i.status==='bought'&&+i.price?+i.price:0),0);
-    return `<div class="card oc"><div class="h"><span class="c">${esc(o.customer)}</span><span class="tag">${esc(o.src)}</span>
-      <span class="muted" style="margin-left:auto">${fday(o.created).slice(5)} 下单${o.deadline?` · <span class="${!o.done&&o.deadline<fday(Date.now())&&b<valid.length?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</span></div>
-      ${o.note?`<div class="muted">${esc(o.note)}</div>`:''}
+    const valid=its.filter(i=>i.status!=='cancel');
+    const tot=valid.reduce((s,i)=>s+Q(i),0),b=valid.reduce((s,i)=>s+(i.status==='bought'?Q(i):G(i)),0);
+    const pct=tot?Math.round(b/tot*100):0;
+    const cost=its.reduce((s,i)=>s+(+i.price||0),0);
+    return `<div class="card oc"><div class="h"><span class="c">${esc(oLabel(o))}</span><span class="tag">${esc(o.src)}</span>
+      <span class="muted" style="margin-left:auto">${fday(o.created).slice(5)} 加入${o.deadline?` · <span class="${!o.done&&o.deadline<fday(Date.now())&&b<tot?'over':''}">截止${o.deadline.slice(5)}</span>`:''}</span></div>
+      ${o.note&&o.customer?`<div class="muted">${esc(o.note)}</div>`:''}
       <div class="prog"><i style="width:${pct}%"></i></div>
-      <div class="muted">买到 ${b}/${valid.length}${cost?` · 已花 ${cost}円`:''}${o.done?` · ${fday(o.doneAt)} 已交付`:''}</div>
+      <div class="muted">买到 ${b}/${tot} 本${cost?` · 已花 ${cost}円`:''}${o.done?` · ${fday(o.doneAt)} 已交付`:''}</div>
       <div class="its">${its.map(i=>`<span class="${i.status==='bought'?'b':i.status==='cancel'?'x':''}">${esc(itemName(i))}</span>`).join('')}</div>
       <div class="acts">${o.done?`<button class="btn sm ghost" data-reopen="${o.id}">恢复为进行中</button>`:
-      `<button class="btn sm ghost" data-more="${o.id}">追加</button><button class="btn sm" data-done="${o.id}">${b<valid.length?'交付（未买齐）':'✓ 已交付'}</button>`}
+      `<button class="btn sm ghost" data-more="${o.id}">追加</button><button class="btn sm" data-done="${o.id}">${b<tot?'交付（未买齐）':'✓ 已交付'}</button>`}
       <button class="btn sm danger" data-del="${o.id}">删除</button></div></div>`}).join('');
 }
 
@@ -296,98 +344,158 @@ function renderLog(){
 }
 
 /* ---------- 操作 ---------- */
-function setStatus(it,st,silent){
-  const o=ord(it.orderId),prev=it.status;if(prev===st)return;
-  it.hist=it.hist||[];
-  const now=Date.now();
-  if(st==='bought'){it.boughtAt=now;addLog(`买到 ${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:'标记买到'})}
-  if(st==='cancel'){it.cancelAt=now;addLog(`取消 ${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:'取消'})}
-  if(st==='todo'){addLog(`撤销「${prev==='bought'?'买到':'取消'}」→ 改回待购：${itemName(it)}（${o.customer}）`,o.id);it.hist.push({t:now,a:(prev==='bought'?'撤销买到':'撤销取消')+'（原记录 '+fmt(prev==='bought'?it.boughtAt:it.cancelAt)+'）'})}
-  it.status=st;
-  if(!silent){save();if(st==='bought')toast(`✓ ${itemName(it)}`,()=>{setStatus(it,'todo')})}
+function hist(it,a){it.hist=(it.hist||[]).concat({t:Date.now(),a})}
+function buy(it,n){ // n 本，默认1
+  const q=Q(it);n=Math.min(n||1,q-G(it));if(n<=0)return;
+  const o=ord(it.orderId);it.got=G(it)+n;it.lastGot=Date.now();
+  const done=it.got>=q;
+  if(done){it.status='bought';it.boughtAt=Date.now()}
+  const lbl=it.kind==='set'?itemShort(it):it.vol!=null?`第${it.vol}卷`:'';
+  D.log.push({t:Date.now(),n,orderId:o.id,text:`买到 ${it.series} ${lbl}${q>1?` ${n}本（${it.got}/${q}）`:''}`});
+  hist(it,q>1?`买到 ${n} 本（${it.got}/${q}）`:'标记买到');
 }
+function unbuy(it,n){
+  n=Math.min(n||1,G(it)||(it.status==='bought'?Q(it):0));if(n<=0)return;
+  const o=ord(it.orderId),was=G(it)||Q(it);it.got=was-n;it.status='todo';
+  addLog(`撤销买到 ${itemName(it)} ${n}本（剩已买 ${it.got}/${Q(it)}）`,o.id);
+  hist(it,`撤销 ${n} 本（原 ${fmt(it.boughtAt||it.lastGot)} 记的）`);
+}
+function cancel(it){const o=ord(it.orderId);it.status='cancel';it.cancelAt=Date.now();addLog(`取消 ${itemName(it)}（${oLabel(o)}）`,o.id);hist(it,'取消')}
+function restore(it){const o=ord(it.orderId);it.status=G(it)>=Q(it)?'bought':'todo';addLog(`恢复待购 ${itemName(it)}`,o.id);hist(it,'撤销取消')}
 
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,[data-open]');if(!t)return;
+  if(t.closest('#sheet'))return;
   const d=t.dataset;
   if(t.closest('nav')&&d.t){go(d.t);return}
   if(d.f){F=d.f;document.querySelectorAll('#fil .chip').forEach(c=>c.classList.toggle('on',c===t));renderBuy();return}
   if(d.o){O=d.o;document.querySelectorAll('[data-o]').forEach(c=>c.classList.toggle('on',c===t));renderOrd();return}
   if(t.closest('#a-src')){document.querySelectorAll('#a-src .chip').forEach(c=>c.classList.toggle('on',c===t));return}
-  if(d.ck){const it=D.items.find(i=>i.id===d.ck);setStatus(it,it.status==='todo'?'bought':'todo');return}
+  if(d.ck){const it=D.items.find(i=>i.id===d.ck);
+    if(it.status==='cancel'){restore(it);save();return}
+    if(it.status==='bought'){unbuy(it,1);save();toast(`已撤销 1 本：${itemName(it)}`);return}
+    buy(it,1);save();toast(Q(it)>1?`✓ ${it.series} ${itemShort(it)} 已买 ${G(it)}/${Q(it)}`:`✓ ${itemName(it)}`,()=>{unbuy(it,1);save()});return}
   if(d.open){openItem(d.open);return}
-  if(d.all){confirm2(t,()=>{const its=visibleItems().filter(i=>norm(i.series)===d.all&&i.status==='todo');its.forEach(i=>setStatus(i,'bought',true));save();toast(`✓ 整组 ${its.length} 件买到`)});return}
-  if(d.done){const o=ord(d.done);o.done=true;o.doneAt=Date.now();addLog(`交付 ${o.customer} 的预订`,o.id);save();toast('已移到「已交付」');return}
-  if(d.reopen){const o=ord(d.reopen);o.done=false;addLog(`恢复 ${o.customer} 的预订为进行中`,o.id);save();return}
+  if(d.gadd){openGroupAdd(d.gadd);return}
+  if(d.all){confirm2(t,()=>{const its=visibleItems().filter(i=>norm(i.series)===d.all&&rem(i));let n=0;its.forEach(i=>{n+=rem(i);buy(i,rem(i))});save();toast(`✓ 整组 ${n} 本买到`)});return}
+  if(d.done){const o=ord(d.done);o.done=true;o.doneAt=Date.now();addLog(`交付 ${oLabel(o)}`,o.id);save();toast('已移到「已交付」');return}
+  if(d.reopen){const o=ord(d.reopen);o.done=false;addLog(`恢复 ${oLabel(o)} 为进行中`,o.id);save();return}
   if(d.more){startMore(d.more);return}
-  if(d.del){confirm2(t,()=>{const o=ord(d.del);const n=D.items.filter(i=>i.orderId===o.id).length;
+  if(d.del){confirm2(t,()=>{const o=ord(d.del);const its=D.items.filter(i=>i.orderId===o.id);
     D.items=D.items.filter(i=>i.orderId!==o.id);D.orders=D.orders.filter(x=>x!==o);
-    addLog(`删除 ${o.customer} 的预订（${n}件，删除前已记录在此）`);save()});return}
+    addLog(`删除预订 ${oLabel(o)}（${o.src}）：${its.map(itemName).join('、')}`);save()});return}
 });
 function confirm2(btn,fn){if(btn.dataset.armed){fn();return}const old=btn.textContent;btn.dataset.armed=1;btn.textContent='再点一次确认';
   setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.textContent=old}},2500)}
-
 function go(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));window.scrollTo(0,0)}
 
-/* 详情 */
-function openItem(id){$('#toast').style.display='none';
-  const it=D.items.find(i=>i.id===id),o=ord(it.orderId);
-  $('#sheet').innerHTML=`<h3>${esc(itemName(it))}</h3><div class="muted">${esc(o.customer)} · ${esc(o.src)} · ${fday(o.created)} 下单</div>
-   <div class="seg"><button class="btn ${it.status==='todo'?'':'ghost'}" data-s="todo">待购</button><button class="btn ${it.status==='bought'?'':'ghost'}" data-s="bought">买到了</button><button class="btn ${it.status==='cancel'?'':'ghost'}" data-s="cancel">取消</button></div>
+/* 单件详情 */
+function openSheet(html){$('#toast').style.display='none';$('#sheet').innerHTML=html;$('#sheet').classList.add('on');$('#sbg').style.display='block'}
+function closeSheet(){$('#sheet').classList.remove('on');$('#sbg').style.display='none'}
+$('#sbg').onclick=closeSheet;
+function openItem(id){
+  const it=D.items.find(i=>i.id===id),o=ord(it.orderId),q=Q(it),g=it.status==='bought'?q:G(it);
+  openSheet(`<h3>${esc(itemName(it))}</h3><div class="muted">${esc(oLabel(o))} · ${esc(o.src)} · ${fday(o.created)} 加入</div>
+   <div class="ar"><span style="flex:1">要买几本</span><div class="step"><button data-qd="-1">−</button><span id="s-q">${q}</span><button data-qd="1">+</button></div></div>
+   <div class="ar"><span style="flex:1">已经买到</span><div class="step"><button data-gd="-1">−</button><span id="s-g">${g}</span><button data-gd="1">+</button></div></div>
+   <div class="seg"><button class="btn ghost" data-s="all">全部买到</button><button class="btn ${it.status==='cancel'?'':'ghost'}" data-s="cancel">${it.status==='cancel'?'已取消（点恢复）':'取消这件'}</button></div>
    <div class="grid2"><div><label class="f">买入价（円）</label><input id="s-price" inputmode="decimal" value="${esc(it.price||'')}"></div>
    <div><label class="f">在哪买的</label><input id="s-store" placeholder="例：Bookoff 三宮" value="${esc(it.store||'')}"></div></div>
    <label class="f">备注</label><input id="s-note" value="${esc(it.note||'')}">
    <button class="btn wide" style="margin-top:14px" id="s-ok">完成</button>
-   <div class="hist"><b>这件的痕迹</b><br>${fmt(o.created)} 加入预订<br>${(it.hist||[]).map(h=>`${fmt(h.t)} ${esc(h.a)}`).join('<br>')}</div>`;
-  $('#sheet').classList.add('on');$('#sbg').style.display='block';
-  $('#sheet').querySelectorAll('[data-s]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();keep();setStatus(it,b.dataset.s,true);save();openItem(id)});
+   <div class="hist"><b>这件的痕迹</b><br>${fmt(o.created)} 加入${q>1?'':''}<br>${(it.hist||[]).map(h=>`${fmt(h.t)} ${esc(h.a)}`).join('<br>')}</div>`);
+  const S=$('#sheet');
   function keep(){const p=$('#s-price').value.trim(),s=$('#s-store').value.trim(),n=$('#s-note').value.trim();
-    if(p!==(it.price||'')||s!==(it.store||'')){if(p||s)it.hist=(it.hist||[]).concat({t:Date.now(),a:`记下 ${p?p+'円':''}${p&&s?' · ':''}${s}`})}
+    if((p||s)&&(p!==(it.price||'')||s!==(it.store||'')))hist(it,`记下 ${p?p+'円':''}${p&&s?' · ':''}${s}`);
     it.price=p;it.store=s;it.note=n}
-  $('#s-ok').onclick=ev=>{ev.stopPropagation();keep();save();closeSheet()};
+  S.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{keep();const nq=Math.max(1,Q(it)+ +b.dataset.qd);if(nq===Q(it))return;
+    addLog(`数量 ${itemName(it)} → ×${nq}`,o.id);hist(it,`数量改为 ${nq}`);it.qty=nq;
+    if(it.status==='bought'&&G(it)<nq){it.got=Math.min(G(it)||Q(it),nq);it.status='todo'}
+    if(it.status==='todo'&&G(it)>=nq){it.got=nq;it.status='bought';it.boughtAt=Date.now()}
+    save();openItem(id)});
+  S.querySelectorAll('[data-gd]').forEach(b=>b.onclick=()=>{keep();if(it.status==='cancel')return;if(+b.dataset.gd>0)buy(it,1);else unbuy(it,1);save();openItem(id)});
+  S.querySelector('[data-s=all]').onclick=()=>{keep();if(it.status==='cancel')restore(it);buy(it,rem(it));save();openItem(id)};
+  S.querySelector('[data-s=cancel]').onclick=()=>{keep();it.status==='cancel'?restore(it):cancel(it);save();openItem(id)};
+  $('#s-ok').onclick=()=>{keep();save();closeSheet()};
 }
-function closeSheet(){$('#sheet').classList.remove('on');$('#sbg').style.display='none'}
-$('#sbg').onclick=closeSheet;
 
-/* 添加 */
+/* 在系列下面直接加 */
+const SRCS=['拼多多','微信','闲鱼','其他'];
+function openGroupAdd(key){
+  const it0=D.items.find(i=>norm(i.series)===key);const name=it0?it0.series:key;
+  const src=D.lastSrc||'闲鱼';
+  openSheet(`<h3>给「${esc(name)}」加</h3><div class="muted">卷号可以写 5，也可以写 5-8（每卷都是右边的数量）</div>
+   <div id="g-rows"></div>
+   <button class="btn sm ghost" id="g-more" style="margin-top:10px">＋ 再加一卷</button>
+   <label class="f">来源</label><div class="bar" id="g-src">${SRCS.map(s=>`<button class="chip ${s===src?'on':''}">${s}</button>`).join('')}</div>
+   <label class="f">备注（可不填）</label><input id="g-note" placeholder="谁要的、订单号…">
+   <button class="btn wide" style="margin-top:14px" id="g-ok">加入待购</button>`);
+  const rows=$('#g-rows');
+  function addRow(){const r=document.createElement('div');r.className='ar';
+    r.innerHTML=`<input class="gv" placeholder="卷号" inputmode="text"><div class="step"><button data-d="-1">−</button><span>1</span><button data-d="1">+</button></div><button class="rm" title="删掉这行">✕</button>`;
+    r.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const s=r.querySelector('span');s.textContent=Math.max(1,+s.textContent+ +b.dataset.d)});
+    r.querySelector('.rm').onclick=()=>{if(rows.children.length>1)r.remove();else r.querySelector('input').value=''};
+    rows.appendChild(r);r.querySelector('input').focus()}
+  addRow();
+  $('#g-more').onclick=addRow;
+  $('#g-src').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;$('#g-src').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c))};
+  $('#g-ok').onclick=()=>{
+    const items=[];
+    rows.querySelectorAll('.ar').forEach(r=>{const v=r.querySelector('input').value.trim();if(!v)return;const q=+r.querySelector('span').textContent;
+      let p=parseLine(`${name} ${v}`);
+      if(p.length===1&&p[0].vol==null&&p[0].kind!=='set'&&norm(p[0].series)!==key)p=[{series:name,kind:'single',vol:null,qty:1,note:v}];
+      p.forEach(x=>{x.series=name;if(!/[x×*＊本]/.test(v))x.qty=q;items.push(x)})});
+    if(!items.length){toast('先填卷号');return}
+    const s=$('#g-src .chip.on').textContent;D.lastSrc=s;
+    const o={id:uid(),src:s,created:Date.now(),deadline:'',note:$('#g-note').value.trim(),done:false};
+    D.orders.push(o);
+    items.forEach(x=>D.items.push(Object.assign({id:uid(),orderId:o.id,status:'todo',hist:[],got:0},x)));
+    addLog(`给 ${name} 加：${summ(items)}（${s}${o.note?' · '+o.note:''}）`,o.id);
+    save();closeSheet();toast(`已加 ${items.reduce((a,i)=>a+i.qty,0)} 本`);
+  };
+}
+
+/* 添加页 */
 let moreId=null;
-function startMore(id){const o=ord(id);moreId=id;go('add');$('#addTitle').textContent=`给「${o.customer}」追加`;
-  $('#a-cus').value=o.customer;$('#a-cus').disabled=true;$('#a-cancel').style.display='';$('#a-items').focus()}
-function resetAdd(){moreId=null;$('#addTitle').textContent='新预订';$('#a-cus').disabled=false;$('#a-cancel').style.display='none';
-  ['#a-cus','#a-items','#a-dl','#a-note'].forEach(s=>$(s).value='');$('#a-prev').innerHTML=''}
+function startMore(id){const o=ord(id);moreId=id;go('add');$('#addTitle').textContent=`给「${oLabel(o)}」追加`;$('#a-cancel').style.display='';$('#a-items').focus()}
+function resetAdd(){moreId=null;$('#addTitle').textContent='新预订';$('#a-cancel').style.display='none';
+  ['#a-items','#a-dl','#a-note'].forEach(s=>$(s).value='');$('#a-prev').innerHTML=''}
 $('#a-cancel').onclick=resetAdd;
+document.querySelectorAll('#a-src .chip').forEach(c=>c.classList.toggle('on',c.textContent===(D.lastSrc||'闲鱼')));
 $('#a-items').oninput=()=>{
   const lines=$('#a-items').value.split('\n').filter(l=>l.trim());
   if(!lines.length){$('#a-prev').innerHTML='';return}
   const all=parseAll($('#a-items').value);
-  $('#a-prev').innerHTML=`<b>会记成 ${all.length} 件：</b>`+lines.map(l=>{const r=parseLine(l);if(!r.length)return'';
-    const x=r[0];const desc=x.kind==='set'?`整套 1 件${x.range?'（'+x.range+'）':''}`:x.vol==null?'1 件':`单本 ${r.length} 本（${compact(r.map(y=>y.vol))}）`;
-    return `<div class="pl">${esc(x.series)} → ${desc}</div>`}).join('');
+  $('#a-prev').innerHTML=`<b>会记成 ${all.reduce((s,i)=>s+i.qty,0)} 本：</b>`+lines.map(l=>{const r=parseLine(l);if(!r.length)return'';
+    return `<div class="pl">${esc(r[0].series)} → ${esc(summ(r).replace(r[0].series,'').trim()||'1 本')}</div>`}).join('');
 };
 $('#a-save').onclick=()=>{
   const items=parseAll($('#a-items').value);
-  const cus=$('#a-cus').value.trim();
-  if(!cus){toast('先填客户');$('#a-cus').focus();return}
   if(!items.length){toast('还没写要买什么');return}
-  let o;
-  if(moreId){o=ord(moreId);addLog(`给 ${o.customer} 追加 ${items.length} 件：${summ(items)}`,o.id)}
-  else{o={id:uid(),customer:cus,src:document.querySelector('#a-src .chip.on').textContent,created:Date.now(),deadline:$('#a-dl').value,note:$('#a-note').value.trim(),done:false};
-    D.orders.push(o);addLog(`新预订 ${cus}（${o.src}）${items.length} 件：${summ(items)}`,o.id)}
-  items.forEach(x=>D.items.push(Object.assign({id:uid(),orderId:o.id,status:'todo',hist:[]},x)));
-  save();resetAdd();go('buy');toast(`已加入待购 ${items.length} 件`);
+  let o;const src=document.querySelector('#a-src .chip.on').textContent;
+  if(moreId){o=ord(moreId);addLog(`给 ${oLabel(o)} 追加：${summ(items)}`,o.id)}
+  else{D.lastSrc=src;o={id:uid(),src,created:Date.now(),deadline:$('#a-dl').value,note:$('#a-note').value.trim(),done:false};
+    D.orders.push(o);addLog(`新预订（${src}${o.note?' · '+o.note:''}）：${summ(items)}`,o.id)}
+  items.forEach(x=>D.items.push(Object.assign({id:uid(),orderId:o.id,status:'todo',hist:[],got:0},x)));
+  save();resetAdd();go('buy');toast(`已加入待购 ${items.reduce((s,i)=>s+i.qty,0)} 本`);
 };
 function summ(items){const g={};items.forEach(i=>{(g[i.series]=g[i.series]||[]).push(i)});
-  return Object.entries(g).map(([s,a])=>a[0].kind==='set'?`${s}全套`:a[0].vol==null?s:`${s} ${compact(a.map(i=>i.vol))}`).join('、')}
+  return Object.entries(g).map(([s,a])=>{
+    const sets=a.filter(i=>i.kind==='set').map(i=>`全套${i.range?'('+i.range+')':''}${i.qty>1?'×'+i.qty:''}`);
+    const nv=a.filter(i=>i.kind!=='set'&&i.vol==null).map(i=>i.qty>1?'×'+i.qty:'');
+    const v=a.filter(i=>i.vol!=null);
+    let vs='';if(v.length)vs=v.some(i=>i.qty>1)?v.map(i=>i.qty>1?`${i.vol}卷×${i.qty}`:`${i.vol}卷`).join('、'):compact(v.map(i=>i.vol));
+    return [s,...sets,vs,...nv].filter(Boolean).join(' ')}).join('；')}
 
 /* 导出 / 备份 */
 function dl(name,text,type){const b=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 const csvc=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
 const csv=rows=>'﻿'+rows.map(r=>r.map(csvc).join(',')).join('\r\n');
-const stName={todo:'待购',bought:'已买到',cancel:'已取消'};
+const stName={todo:'待购',bought:'已买齐',cancel:'已取消'};
 $('#x-items').onclick=()=>{
-  const rows=[['系列/书名','卷/全套','状态','客户','来源','下单日','截止','买到时间','价格(円)','在哪买','备注','预订状态']];
-  D.items.forEach(i=>{const o=ord(i.orderId)||{};rows.push([i.series,itemShort(i),stName[i.status],o.customer,o.src,o.created?fday(o.created):'',o.deadline||'',i.boughtAt&&i.status==='bought'?fday(i.boughtAt)+' '+fmt(i.boughtAt).split(' ')[1]:'',i.price||'',i.store||'',i.note||'',o.done?'已交付':'进行中'])});
+  const rows=[['系列/书名','卷/全套','数量','已买','状态','来源','备注','加入日','截止','买齐时间','价格(円)','在哪买','预订状态']];
+  D.items.forEach(i=>{const o=ord(i.orderId)||{};rows.push([i.series,itemShort(i),Q(i),i.status==='bought'?Q(i):G(i),stName[i.status],o.src,[o.customer,o.note,i.note].filter(Boolean).join(' / '),o.created?fday(o.created):'',o.deadline||'',i.status==='bought'&&i.boughtAt?fday(i.boughtAt)+' '+fmt(i.boughtAt).split(' ')[1]:'',i.price||'',i.store||'',o.done?'已交付':'进行中'])});
   dl(`购买_采购表_${fday(Date.now())}.csv`,csv(rows),'text/csv')};
 $('#x-log').onclick=()=>{const rows=[['日期','时间','记录']];D.log.forEach(l=>{const d=new Date(l.t);rows.push([fday(l.t),pad(d.getHours())+':'+pad(d.getMinutes()),l.text])});
   dl(`购买_痕迹_${fday(Date.now())}.csv`,csv(rows),'text/csv')};
